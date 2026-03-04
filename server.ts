@@ -14,10 +14,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const DATA_FILE = path.join(__dirname, "data.json");
-// allow configurable port for hosting providers
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
-// Initialize data.json if it doesn't exist
 if (!fs.existsSync(DATA_FILE)) {
   const initialMessages = [
     {
@@ -123,7 +121,6 @@ interface AppData {
   playlists: PlaylistData[];
 }
 
-// Helper to read/write data
 const processPlaylists = (data: AppData) => {
   if (!data.playlists) data.playlists = [];
   data.playlists = data.playlists.map((pl: PlaylistData) => {
@@ -146,7 +143,7 @@ const processPlaylists = (data: AppData) => {
     const firstMsg = plMessages[0];
     const thumbnail = firstMsg 
       ? (firstMsg.videoId ? `https://img.youtube.com/vi/${firstMsg.videoId}/0.jpg` : firstMsg.thumbnail)
-      : "https://picsum.photos/seed/playlist/400/400"; // Default placeholder
+      : "https://picsum.photos/seed/playlist/400/400";
 
     return {
       ...pl,
@@ -167,7 +164,6 @@ const saveData = (data: AppData) => {
   fs.writeFileSync(DATA_FILE, JSON.stringify(processedData, null, 2));
 };
 
-// Admin Auth Middleware
 const authenticateAdmin = (req: Request, res: Response, next: () => void) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ error: "Unauthorized" });
@@ -181,18 +177,15 @@ const authenticateAdmin = (req: Request, res: Response, next: () => void) => {
   }
 };
 
-// API Routes
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
   
   const submittedUser = username?.trim().toLowerCase();
   const submittedPass = password?.trim();
 
-  // Hardcoded defaults that will ALWAYS work
   const DEFAULT_USER = "admin";
   const DEFAULT_PASS = "admin123";
 
-  // Environment variables (with fallbacks)
   const envUser = (process.env.ADMIN_USERNAME || DEFAULT_USER).trim().toLowerCase();
   const envPass = (process.env.ADMIN_PASSWORD || DEFAULT_PASS).trim();
 
@@ -255,7 +248,6 @@ app.delete("/api/messages/:id", authenticateAdmin, (req, res) => {
   res.json({ success: true });
 });
 
-// Playlist Routes
 app.get("/api/playlists", (_req, res) => {
   const data = getData();
   res.json(data.playlists || []);
@@ -287,7 +279,6 @@ app.delete("/api/playlists/:id", authenticateAdmin, (req, res) => {
   res.json({ success: true });
 });
 
-// Maintenance Routes
 app.get("/api/admin/export", authenticateAdmin, (_req, res) => {
   const data = getData();
   res.json(data);
@@ -299,14 +290,12 @@ app.post("/api/admin/import", authenticateAdmin, (req, res) => {
     return res.status(400).json({ error: "Invalid data format. Must have 'messages' array." });
   }
   
-  // Ensure playlists exists
   if (!newData.playlists) newData.playlists = [];
   
   saveData(newData);
   res.json({ success: true, message: "Data imported successfully" });
 });
 
-// Vite middleware for development
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
